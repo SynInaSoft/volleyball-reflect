@@ -30,16 +30,19 @@ export default function App() {
 
   const token = new URLSearchParams(window.location.search).get('t')
 
+  const [debugMsg, setDebugMsg] = useState('')
+
   async function load() {
-    if (!token) { setLoading(false); setValid(false); return }
+    if (!token) { setLoading(false); setValid(false); setDebugMsg('URL에 ?t= 토큰이 없습니다.'); return }
     setLoading(true)
     const { data, error } = await supabase.rpc('student_home', { p_token: token })
-    if (error || !data || !data.ok) { setValid(false); setLoading(false); return }
+    if (error) { setValid(false); setLoading(false); setDebugMsg('RPC 오류: ' + (error.message || JSON.stringify(error))); return }
+    if (!data) { setValid(false); setLoading(false); setDebugMsg('응답이 비어 있습니다.'); return }
+    if (!data.ok) { setValid(false); setLoading(false); setDebugMsg('서버 응답: ' + JSON.stringify(data)); return }
     setValid(true)
     setStudent(data.student)
     setOpenTrainings(data.open_trainings || [])
     setMyReflections(data.my_reflections || [])
-    // 이미 쓴 훈련은 작성칸 기본값 채우기 위해 매핑
     setLoading(false)
   }
 
@@ -86,6 +89,7 @@ export default function App() {
           <Seam />
           <h1>링크를 확인할 수 없어요</h1>
           <p className="muted">선생님이 보내준 개인 소감 링크로 다시 접속해 주세요.</p>
+          {debugMsg ? <p style={{ fontSize: 11, color: '#999', marginTop: 12, wordBreak: 'break-all' }}>{debugMsg}</p> : null}
         </div>
       </div>
     )
